@@ -1,13 +1,7 @@
-import { useEffect, useState } from 'react';
+
+import { useUserProfileData } from "../hooks/queries/use-user-profile-data";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8081';
-
-const getCookie = (name) => {
-    return document.cookie
-        .split('; ')
-        .find((cookie) => cookie.startsWith(`${name}=`))
-        ?.split('=')[1];
-};
 
 const DiscordIcon = () => (
     <svg
@@ -24,54 +18,11 @@ const DiscordIcon = () => (
 
 const Header = () => {
     const discordLoginUrl = `${API_BASE_URL}/oauth2/authorization/discord`;
-    const [me, setMe] = useState(null);
-    const [isLoadingMe, setIsLoadingMe] = useState(true);
 
-    useEffect(() => {
-        const controller = new AbortController();
+    const { data : userProfile, isLoading,  error} = useUserProfileData();
 
-        const fetchMe = async () => {
-            try {
-                const accessToken = getCookie('accessToken');
-                const headers = accessToken
-                    ? { Authorization: `Bearer ${decodeURIComponent(accessToken)}` }
-                    : undefined;
-
-                const response = await fetch(`${API_BASE_URL}/me`, {
-                    method: 'GET',
-                    headers,
-                    credentials: 'include',
-                    signal: controller.signal,
-                });
-
-                if (response.status === 401 || response.status === 403) {
-                    setMe(null);
-                    return;
-                }
-
-                if (!response.ok) {
-                    throw new Error(`Failed to fetch me: ${response.status}`);
-                }
-
-                const data = await response.json();
-                setMe(data);
-            } catch (error) {
-                if (error.name !== 'AbortError') {
-                    console.error(error);
-                    setMe(null);
-                }
-            } finally {
-                setIsLoadingMe(false);
-            }
-        };
-
-        fetchMe();
-
-        return () => controller.abort();
-    }, []);
-
-    const displayName = me?.nickname ?? me?.username ?? me?.name ?? me?.email ?? '사용자';
-    const profileImageUrl = me?.profileImageUrl ?? me?.profile_image_url ?? me?.avatarUrl ?? me?.avatar_url;
+    // if (error) return <div></div>;
+    // if (isLoading) return <div></div>;
 
     return (
         <header style={styles.header}>
@@ -82,25 +33,19 @@ const Header = () => {
             <nav style={styles.nav} aria-label="주요 메뉴">
                 <a href="/" style={styles.navLink}>홈</a>
             </nav>
-
+            
             <div style={styles.actions}>
-                {isLoadingMe ? (
-                    <span style={styles.authStatus}>로그인 확인 중...</span>
-                ) : me ? (
-                    <div style={styles.profileArea} aria-label="로그인 사용자 정보">
-                        {profileImageUrl ? (
-                            <img src={profileImageUrl} alt="프로필" style={styles.profileImage} />
-                        ) : (
-                            <span style={styles.profileFallback}>{displayName.charAt(0)}</span>
-                        )}
-                        <span style={styles.profileName}>{displayName}</span>
-                    </div>
-                ) : (
+                {userProfile?.data ?
+                    <a href={discordLoginUrl} style={styles.discordLoginButton}>
+                        <DiscordIcon />
+                        <span>{userProfile.data.providerGlobalName}</span>
+                    </a>
+                    :
                     <a href={discordLoginUrl} style={styles.discordLoginButton}>
                         <DiscordIcon />
                         <span>Discord 로그인</span>
                     </a>
-                )}
+                }
             </div>
         </header>
     );
@@ -144,11 +89,6 @@ const styles = {
         justifyContent: 'flex-end',
         marginLeft: 'auto',
     },
-    authStatus: {
-        color: '#6b7280',
-        fontSize: '14px',
-        fontWeight: 500,
-    },
     discordLoginButton: {
         display: 'inline-flex',
         alignItems: 'center',
@@ -163,43 +103,6 @@ const styles = {
         fontWeight: 700,
         textDecoration: 'none',
         boxShadow: '0 8px 18px rgba(88, 101, 242, 0.25)',
-    },
-    profileArea: {
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: '10px',
-        minHeight: '40px',
-        padding: '0 14px 0 6px',
-        border: '1px solid #e5e7eb',
-        borderRadius: '999px',
-        backgroundColor: '#f9fafb',
-    },
-    profileImage: {
-        width: '32px',
-        height: '32px',
-        borderRadius: '50%',
-        objectFit: 'cover',
-    },
-    profileFallback: {
-        display: 'inline-flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        width: '32px',
-        height: '32px',
-        borderRadius: '50%',
-        color: '#ffffff',
-        backgroundColor: '#5865f2',
-        fontSize: '14px',
-        fontWeight: 700,
-    },
-    profileName: {
-        color: '#111827',
-        fontSize: '14px',
-        fontWeight: 700,
-        maxWidth: '160px',
-        overflow: 'hidden',
-        textOverflow: 'ellipsis',
-        whiteSpace: 'nowrap',
     },
 };
 
