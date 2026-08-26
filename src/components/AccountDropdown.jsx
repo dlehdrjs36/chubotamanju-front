@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { logout } from "../api/logout";
+import { useHomeUiStore } from "../store/page/useHomeUiStore";
+import { useSessionStore } from "../store/session/useSessionStore";
 
 const DiscordIcon = () => (
   <svg
@@ -33,6 +35,8 @@ const AccountDropdown = ({ profile }) => {
   const dropdownRef = useRef(null);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const resetHomeUiState = useHomeUiStore((state) => state.resetHomeUiState);
+  const resetSessionState = useSessionStore((state) => state.resetSessionState);
   const displayName = getProfileDisplayName(profile);
 
   useEffect(() => {
@@ -75,12 +79,28 @@ const AccountDropdown = ({ profile }) => {
     setLogoutError("");
 
     try {
-      await logout();
+      // 진행 중인 TanStack Query 요청을 먼저 취소해서 로그아웃 직전 응답이 다시 캐시에 들어오는 것을 막습니다.
       await queryClient.cancelQueries();
+
+      // 로그아웃 api 호출(서버에서 쿠키 무효화 처리)
+      await logout();
+
+      // 활성화된 Header의 userProfile observer가 즉시 갱신되도록 사용자 관련 캐시는 명시적으로 비웁니다.(UI 갱신 신호가 전달)
       queryClient.setQueryData(["userProfile"], null);
       queryClient.setQueryData(["userGuilds"], null);
       queryClient.removeQueries({ queryKey: ["guildMissions"] });
+
+      //zustand 상태 초기화
+      resetSessionState();
+      resetHomeUiState();
+
+      //드롭다운 닫음
       setIsOpen(false);
+
+      // UI 갱신 신호가 전달된 직후, 페이지를 이동하기 바로 직전에 창고를 전체 포맷합니다.
+      queryClient.clear();
+
+      //페이지 메인으로 이동
       navigate("/", { replace: true });
     } catch {
       setLogoutError("로그아웃에 실패했습니다.");

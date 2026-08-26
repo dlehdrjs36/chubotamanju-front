@@ -1,8 +1,7 @@
 import { apiClient } from "../api";
 
-export const getUserProfile = async () => {
-    const response = await apiClient.get("me");
-    console.log(response);
-    
-    return response.data;
-} 
+export const getUserProfile = async ({ signal } = {}) => {
+  const response = await apiClient.get("me", { signal });
+
+  return response.data;
+};

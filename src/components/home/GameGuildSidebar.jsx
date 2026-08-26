@@ -1,10 +1,35 @@
-const GameGuildSidebar = ({
-  guilds,
-  activeGuild,
-  isActiveGuildMissionsLoading,
-  activeGuildMissionCount,
-  onSelectGuild,
-}) => {
+import { useHomeMissions } from "../../hooks/use-home-missions";
+import { useHomeUiStore } from "../../store/page/useHomeUiStore";
+import { useSessionStore } from "../../store/session/useSessionStore";
+
+const SidebarMessage = ({ children, isError = false }) => (
+  <div
+    className={`rounded-2xl border border-dashed px-4 py-5 text-center text-sm font-bold ${
+      isError
+        ? "border-red-200 bg-red-50 text-red-700"
+        : "border-slate-300 bg-white/70 text-slate-400"
+    }`}
+  >
+    {children}
+  </div>
+);
+
+const GameGuildSidebar = () => {
+  const {
+    guilds,
+    activeGuild,
+    isLoggedIn,
+    isUserProfileLoading,
+    isUserGuildsLoading,
+    userGuildsError,
+    isLoading: isActiveGuildMissionsLoading,
+    missions,
+  } = useHomeMissions();
+  const setSelectedGuildId = useSessionStore(
+    (state) => state.setSelectedGuildId,
+  );
+  const resetHomeUiState = useHomeUiStore((state) => state.resetHomeUiState);
+
   // 사이드바에서 쓰는 길드 이름 fallback은 별도 guild 유틸 없이 이 컴포넌트 안에서 결정합니다.
   // 사용자에게 보이는 버튼 텍스트는 guildId가 아니라 guildName을 우선 사용합니다.
   const getGuildDisplayName = (guild) => {
@@ -56,7 +81,69 @@ const GameGuildSidebar = ({
       return "미션 불러오는 중";
     }
 
-    return `미션 ${activeGuildMissionCount}건`;
+    return `미션 ${missions.length}건`;
+  };
+
+  const handleSelectGuild = (guildId) => {
+    setSelectedGuildId(guildId);
+    resetHomeUiState();
+  };
+
+  const renderGuildList = () => {
+    if (isUserProfileLoading || (isLoggedIn && isUserGuildsLoading)) {
+      return <SidebarMessage>길드 목록을 불러오는 중입니다.</SidebarMessage>;
+    }
+
+    if (!isLoggedIn) {
+      return <SidebarMessage>로그인 후 길드가 표시됩니다.</SidebarMessage>;
+    }
+
+    if (userGuildsError) {
+      return (
+        <SidebarMessage isError>
+          길드 목록을 불러오지 못했습니다.
+        </SidebarMessage>
+      );
+    }
+
+    if (guilds.length === 0) {
+      return <SidebarMessage>표시할 길드가 없습니다.</SidebarMessage>;
+    }
+
+    return guilds.map((guild) => {
+      const isActiveGuild = guild.guildId === activeGuild?.guildId;
+      const guildDisplayName = getGuildDisplayName(guild);
+
+      return (
+        <button
+          className={`flex min-h-[72px] w-full cursor-pointer items-center gap-3 rounded-2xl border px-3 py-2 text-left transition hover:-translate-y-px hover:border-indigo-200 hover:bg-white hover:shadow-[0_10px_24px_rgba(15,23,42,0.08)] ${
+            isActiveGuild
+              ? "border-indigo-200 bg-white text-indigo-950 shadow-[inset_0_0_0_1px_rgba(88,101,242,0.16)]"
+              : "border-transparent bg-transparent text-slate-600"
+          }`}
+          key={guild.guildId}
+          type="button"
+          aria-pressed={isActiveGuild}
+          title={guildDisplayName}
+          onClick={() => handleSelectGuild(guild.guildId)}
+        >
+          <span
+            className="grid h-11 w-11 flex-none place-items-center rounded-2xl bg-gradient-to-br from-[#5865f2] to-violet-600 text-sm font-black tracking-[-0.02em] text-white"
+            aria-hidden="true"
+          >
+            {getGuildInitials(guild)}
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block truncate text-[15px] font-black">
+              {guildDisplayName}
+            </span>
+            <span className="mt-0.5 block truncate text-xs font-bold text-slate-400">
+              {getGuildSubtitle(guild)}
+            </span>
+          </span>
+        </button>
+      );
+    });
   };
 
   return (
@@ -68,50 +155,7 @@ const GameGuildSidebar = ({
         길드
       </p>
 
-      <div className="flex flex-col gap-3">
-        {/* 길드 목록 API가 빈 배열을 반환한 경우의 사이드바 빈 상태입니다. */}
-        {guilds.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-slate-300 bg-white/70 px-4 py-5 text-center text-sm font-bold text-slate-400">
-            표시할 길드가 없습니다.
-          </div>
-        ) : null}
-
-        {/* 길드 버튼을 누르면 Home에서 activeGuildId를 바꾸고 미션 조회를 시작합니다. */}
-        {guilds.map((guild) => {
-          const isActiveGuild = guild.guildId === activeGuild?.guildId;
-          const guildDisplayName = getGuildDisplayName(guild);
-
-          return (
-            <button
-              className={`flex min-h-[72px] w-full cursor-pointer items-center gap-3 rounded-2xl border px-3 py-2 text-left transition hover:-translate-y-px hover:border-indigo-200 hover:bg-white hover:shadow-[0_10px_24px_rgba(15,23,42,0.08)] ${
-                isActiveGuild
-                  ? "border-indigo-200 bg-white text-indigo-950 shadow-[inset_0_0_0_1px_rgba(88,101,242,0.16)]"
-                  : "border-transparent bg-transparent text-slate-600"
-              }`}
-              key={guild.guildId}
-              type="button"
-              aria-pressed={isActiveGuild}
-              title={guildDisplayName}
-              onClick={() => onSelectGuild(guild.guildId)}
-            >
-              <span
-                className="grid h-11 w-11 flex-none place-items-center rounded-2xl bg-gradient-to-br from-[#5865f2] to-violet-600 text-sm font-black tracking-[-0.02em] text-white"
-                aria-hidden="true"
-              >
-                {getGuildInitials(guild)}
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="block truncate text-[15px] font-black">
-                  {guildDisplayName}
-                </span>
-                <span className="mt-0.5 block truncate text-xs font-bold text-slate-400">
-                  {getGuildSubtitle(guild)}
-                </span>
-              </span>
-            </button>
-          );
-        })}
-      </div>
+      <div className="flex flex-col gap-3">{renderGuildList()}</div>
     </aside>
   );
 };

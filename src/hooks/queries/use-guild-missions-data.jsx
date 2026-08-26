@@ -40,10 +40,11 @@ const getNextMissionCursor = (mission) => {
 // guildId가 있을 때만 미션을 조회해서 초기 홈 화면에서 불필요한 API 호출을 막습니다.
 export function useGuildMissionsData(guildId) {
   return useInfiniteQuery({
-    queryFn: ({ pageParam }) =>
+    queryFn: ({ pageParam, signal }) =>
       getGuildMissions({
         guildId,
         size: MISSION_PAGE_SIZE,
+        signal,
         ...pageParam,
       }),
     queryKey: ["guildMissions", guildId],

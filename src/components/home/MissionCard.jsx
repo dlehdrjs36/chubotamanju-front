@@ -1,5 +1,5 @@
-const RequestCard = ({ request, guild }) => {
-  // 카드 상단 배지에 표시할 길드 이름은 별도 guild 유틸 없이 카드 내부에서 결정합니다.
+// 카드 상단 배지에 표시할 길드 이름
+const MissionCard = ({ request, guild }) => {
   // 사용자에게 보이는 배지에는 guildId 대신 guildName을 사용합니다.
   const getGuildDisplayName = (targetGuild) => {
     const displayName =
@@ -23,12 +23,10 @@ const RequestCard = ({ request, guild }) => {
   };
 
   // Discord 웹 프로필 fallback URL입니다.
-  const getDiscordUserWebUrl = (discordUserId) =>
-    `https://discord.com/users/${discordUserId}`;
+  const getDiscordUserWebUrl = (discordUserId) => `https://discord.com/users/${discordUserId}`;
 
   // Discord 앱을 먼저 열기 위한 deep link URL입니다.
-  const getDiscordUserAppUrl = (discordUserId) =>
-    `discord://-/users/${discordUserId}`;
+  const getDiscordUserAppUrl = (discordUserId) => `discord://-/users/${discordUserId}`;
 
   // Discord 앱 열기에 실패하면 짧은 시간 뒤 웹 프로필로 이동합니다.
   const openDiscordDm = (event, discordUserId) => {
@@ -123,4 +121,4 @@ const RequestCard = ({ request, guild }) => {
   );
 };
 
-export default RequestCard;
+export default MissionCard;

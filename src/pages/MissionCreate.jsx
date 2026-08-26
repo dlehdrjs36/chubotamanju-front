@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import bountyRequestImage from "../assets/guild/bounty-request.png";
-import RequestCreateForm from "../components/RequestCreateForm";
+import MissionCreateForm from "../components/MissionCreateForm";
 import { useCreateGuildMission } from "../hooks/mutations/use-create-guild-mission";
 import { useUserGuildsData } from "../hooks/queries/use-user-guilds-data";
 import { useUserProfileData } from "../hooks/queries/use-user-profile-data";
@@ -14,7 +14,7 @@ const INITIAL_FORM_VALUES = {
   description: "",
 };
 
-const RequestCreate = () => {
+const MissionCreate = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
@@ -208,7 +208,7 @@ const RequestCreate = () => {
     }
 
     return (
-      <RequestCreateForm
+      <MissionCreateForm
         guilds={guilds}
         selectedGuild={selectedGuild}
         values={formValues}
@@ -251,4 +251,4 @@ const RequestCreate = () => {
   );
 };
 
-export default RequestCreate;
+export default MissionCreate;

@@ -1,4 +1,12 @@
-const RequestSearchInput = ({ keyword, activeGuildName, onChange }) => {
+import { useHomeGuilds } from "../../hooks/use-home-guilds";
+import { useHomeUiStore } from "../../store/page/useHomeUiStore";
+
+const MissionSearchInput = () => {
+  const keyword = useHomeUiStore((state) => state.keyword);
+  const setKeyword = useHomeUiStore((state) => state.setKeyword);
+  const { activeGuild } = useHomeGuilds();
+  const activeGuildName = activeGuild?.guildName ?? "길드";
+
   return (
     <div className="flex items-center gap-3.5 max-[560px]:flex-col max-[560px]:items-stretch">
       <label className="relative min-w-0 flex-1">
@@ -7,8 +15,8 @@ const RequestSearchInput = ({ keyword, activeGuildName, onChange }) => {
           className="min-h-12 w-full rounded-2xl border border-slate-200 bg-white py-0 pr-[52px] pl-[18px] text-slate-900 shadow-inner outline-none focus:border-[#5865f2] focus:ring-4 focus:ring-[#5865f2]/15"
           type="search"
           value={keyword}
-          onChange={(event) => onChange(event.target.value)}
-          placeholder={`${activeGuildName ?? "길드"} 의뢰 검색`}
+          onChange={(event) => setKeyword(event.target.value)}
+          placeholder={`${activeGuildName} 의뢰 검색`}
         />
         <span
           className="pointer-events-none absolute top-1/2 right-[18px] -translate-y-1/2 text-[21px] text-slate-400"
@@ -21,4 +29,4 @@ const RequestSearchInput = ({ keyword, activeGuildName, onChange }) => {
   );
 };
 
-export default RequestSearchInput;
+export default MissionSearchInput;

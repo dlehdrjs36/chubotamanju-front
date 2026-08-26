@@ -6,10 +6,12 @@ export const getGuildMissions = async ({
   lastBountyMissionId,
   lastCreatedAt,
   size,
+  signal,
 }) => {
   const response = await apiClient.get(
     `guilds/${encodeURIComponent(guildId)}/missions`,
     {
+      signal,
       params: {
         lastBountyMissionId,
         lastCreatedAt,

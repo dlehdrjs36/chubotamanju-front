@@ -9,7 +9,7 @@ const TEXTAREA_CLASS_NAME = `${INPUT_CLASS_NAME} min-h-[140px] resize-y py-3`;
 const FORM_ROW_CLASS_NAME =
   "grid grid-cols-[120px_minmax(0,1fr)] items-start gap-4 max-[640px]:grid-cols-1 max-[640px]:gap-2";
 
-const RequestCreateForm = ({
+const MissionCreateForm = ({
   guilds,
   selectedGuild,
   values,
@@ -162,4 +162,4 @@ const RequestCreateForm = ({
   );
 };
 
-export default RequestCreateForm;
+export default MissionCreateForm;
