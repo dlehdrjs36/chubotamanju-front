@@ -1,5 +1,49 @@
+import { useNavigate } from "react-router-dom";
+
+const toText = (value) => {
+  if (typeof value === "string" || typeof value === "number") {
+    return String(value);
+  }
+
+  return "";
+};
+
+const firstPresentValue = (...values) => {
+  return values.find(
+    (value) => value !== undefined && value !== null && value !== "",
+  );
+};
+
+const getMissionId = (mission) => {
+  return toText(
+    firstPresentValue(
+      mission?.id,
+      mission?.missionId,
+      mission?.mission_id,
+      mission?.bountyMissionId,
+      mission?.bounty_mission_id,
+    ),
+  );
+};
+
+const getGuildId = (guild) => {
+  return toText(
+    firstPresentValue(
+      guild?.guildId,
+      guild?.guild_id,
+      guild?.id,
+      guild?.serverId,
+      guild?.server_id,
+    ),
+  );
+};
+
 // 카드 상단 배지에 표시할 길드 이름
 const MissionCard = ({ request, guild }) => {
+  const navigate = useNavigate();
+  const missionId = getMissionId(request);
+  const guildId = getGuildId(guild);
+
   // 사용자에게 보이는 배지에는 guildId 대신 guildName을 사용합니다.
   const getGuildDisplayName = (targetGuild) => {
     const displayName =
@@ -44,6 +88,23 @@ const MissionCard = ({ request, guild }) => {
       once: true,
     });
     window.location.href = getDiscordUserAppUrl(discordUserId);
+  };
+
+  // 의뢰보고 페이지로 이동할 때 현재 카드의 미션/길드 정보를 state로 넘겨서
+  // 새 페이지에서 같은 디자인의 미션 요약을 즉시 표시할 수 있게 합니다.
+  const handleMissionProofClick = () => {
+    if (!missionId) {
+      return;
+    }
+
+    const search = guildId ? `?guildId=${encodeURIComponent(guildId)}` : "";
+
+    navigate(`/missions/${encodeURIComponent(missionId)}/proof${search}`, {
+      state: {
+        mission: request,
+        guild,
+      },
+    });
   };
 
   return (
@@ -110,9 +171,16 @@ const MissionCard = ({ request, guild }) => {
       {/* 추후 미션 수행 보고 플로우로 연결될 버튼입니다. */}
       <div className="mt-4 flex justify-end">
         <button
-          className="inline-flex min-h-10 cursor-pointer items-center rounded-xl border border-red-200 bg-red-50 px-4 text-sm font-black text-red-700 transition hover:-translate-y-px hover:bg-red-100 hover:text-red-800"
+          className="inline-flex min-h-10 cursor-pointer items-center rounded-xl border border-red-200 bg-red-50 px-4 text-sm font-black text-red-700 transition hover:-translate-y-px hover:bg-red-100 hover:text-red-800 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:bg-red-50 disabled:hover:text-red-700"
           type="button"
+          disabled={!missionId}
+          onClick={handleMissionProofClick}
           aria-label={`${request.requestName} 의뢰보고`}
+          title={
+            missionId
+              ? `${request.requestName} 의뢰보고`
+              : "미션 식별자가 없어 의뢰보고를 열 수 없습니다."
+          }
         >
           의뢰보고
         </button>
