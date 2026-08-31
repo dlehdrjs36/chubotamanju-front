@@ -1,10 +1,17 @@
 import { useNavigate } from "react-router-dom";
 import { useHomeMissions } from "../../hooks/use-home-missions";
 
-const ActiveGameSummary = () => {
+const getDefaultActiveGuildDescription = (activeGuildDisplayName) => {
+  return `${activeGuildDisplayName}에 등록된 의뢰를 표시합니다.`;
+};
+
+const ActiveGameSummary = ({
+  useMissions = useHomeMissions,
+  getActiveGuildDescription = getDefaultActiveGuildDescription,
+}) => {
   const navigate = useNavigate();
   const { activeGuild, activeGuildDisplayName, visibleMissions, isLoggedIn } =
-    useHomeMissions();
+    useMissions();
 
   // 로그인하지 않았거나 길드를 선택하지 않았으면 의뢰 등록으로 진입할 수 없습니다.
   const isRequestCreateDisabled = !activeGuild || !isLoggedIn;
@@ -33,7 +40,7 @@ const ActiveGameSummary = () => {
         </h1>
         <p className="mt-2 mb-0 max-w-[680px] text-white/80">
           {activeGuild
-            ? `${activeGuildDisplayName}에 등록된 의뢰를 표시합니다.`
+            ? getActiveGuildDescription(activeGuildDisplayName)
             : "왼쪽에서 길드를 선택하면 의뢰 목록이 표시됩니다."}
         </p>
       </div>

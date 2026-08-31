@@ -36,8 +36,12 @@ const AccountDropdown = ({ profile }) => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const resetHomeUiState = useHomeUiStore((state) => state.resetHomeUiState);
+  const selectedGuildId = useSessionStore((state) => state.selectedGuildId);
   const resetSessionState = useSessionStore((state) => state.resetSessionState);
   const displayName = getProfileDisplayName(profile);
+  const myRegisteredMissionsPath = selectedGuildId
+    ? `/missions/me?guildId=${encodeURIComponent(selectedGuildId)}`
+    : "/missions/me";
 
   useEffect(() => {
     if (!isOpen) {
@@ -89,6 +93,7 @@ const AccountDropdown = ({ profile }) => {
       queryClient.setQueryData(["userProfile"], null);
       queryClient.setQueryData(["userGuilds"], null);
       queryClient.removeQueries({ queryKey: ["guildMissions"] });
+      queryClient.removeQueries({ queryKey: ["myGuildMissions"] });
 
       //zustand 상태 초기화
       resetSessionState();
@@ -135,6 +140,14 @@ const AccountDropdown = ({ profile }) => {
             onClick={() => setIsOpen(false)}
           >
             프로필
+          </Link>
+          <Link
+            className="block px-8 py-4 text-lg font-bold text-white no-underline transition hover:bg-neutral-600 focus:bg-neutral-600 focus:outline-none"
+            role="menuitem"
+            to={myRegisteredMissionsPath}
+            onClick={() => setIsOpen(false)}
+          >
+            내가 등록한 미션
           </Link>
           <button
             className="block w-full cursor-pointer border-0 bg-transparent px-8 py-4 text-left text-lg font-bold text-white transition hover:bg-neutral-600 focus:bg-neutral-600 focus:outline-none disabled:cursor-not-allowed disabled:opacity-60"

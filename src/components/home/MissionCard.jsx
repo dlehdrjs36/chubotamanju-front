@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import { useCancelMission } from "../../hooks/mutations/use-cancel-mission";
 
 const toText = (value) => {
   if (typeof value === "string" || typeof value === "number") {
@@ -38,39 +39,67 @@ const getGuildId = (guild) => {
   );
 };
 
+const getGuildDisplayName = (guild) => {
+  const displayName = firstPresentValue(
+    guild?.guildName,
+    guild?.guild_name,
+    guild?.name,
+    guild?.displayName,
+    guild?.display_name,
+    guild?.serverName,
+    guild?.server_name,
+  );
+
+  if (displayName) {
+    return displayName;
+  }
+
+  if (!getGuildId(guild)) {
+    return "길드 미선택";
+  }
+
+  return "이름 없는 길드";
+};
+
+const getDescription = (request) => {
+  return request.description || "등록된 의뢰 설명이 없습니다.";
+};
+
+const getMissionStatus = (mission) => {
+  return toText(
+    firstPresentValue(
+      mission?.status,
+      mission?.missionStatus,
+      mission?.mission_status,
+    ),
+  )
+    .trim()
+    .toUpperCase();
+};
+
+const isCancelableMission = (mission) => {
+  const missionStatus = getMissionStatus(mission);
+
+  return !["COMPLETED", "CANCEL", "CANCELED", "CANCELLED"].includes(
+    missionStatus,
+  );
+};
+
 // 카드 상단 배지에 표시할 길드 이름
-const MissionCard = ({ request, guild }) => {
+const MissionCard = ({ request, guild, actionVariant = "proof" }) => {
   const navigate = useNavigate();
+  const cancelMissionMutation = useCancelMission();
   const missionId = getMissionId(request);
   const guildId = getGuildId(guild);
-
-  // 사용자에게 보이는 배지에는 guildId 대신 guildName을 사용합니다.
-  const getGuildDisplayName = (targetGuild) => {
-    const displayName =
-      targetGuild?.guildName ??
-      targetGuild?.guild_name ??
-      targetGuild?.name ??
-      targetGuild?.displayName ??
-      targetGuild?.display_name ??
-      targetGuild?.serverName ??
-      targetGuild?.server_name;
-
-    if (displayName) {
-      return displayName;
-    }
-
-    if (!targetGuild?.guildId) {
-      return "길드 미선택";
-    }
-
-    return "이름 없는 길드";
-  };
+  const canCancelMission = isCancelableMission(request);
 
   // Discord 웹 프로필 fallback URL입니다.
-  const getDiscordUserWebUrl = (discordUserId) => `https://discord.com/users/${discordUserId}`;
+  const getDiscordUserWebUrl = (discordUserId) =>
+    `https://discord.com/users/${discordUserId}`;
 
   // Discord 앱을 먼저 열기 위한 deep link URL입니다.
-  const getDiscordUserAppUrl = (discordUserId) => `discord://-/users/${discordUserId}`;
+  const getDiscordUserAppUrl = (discordUserId) =>
+    `discord://-/users/${discordUserId}`;
 
   // Discord 앱 열기에 실패하면 짧은 시간 뒤 웹 프로필로 이동합니다.
   const openDiscordDm = (event, discordUserId) => {
@@ -107,11 +136,99 @@ const MissionCard = ({ request, guild }) => {
     });
   };
 
+  const handleMissionCancelClick = () => {
+    if (!missionId || cancelMissionMutation.isPending) {
+      return;
+    }
+
+    cancelMissionMutation.mutate({
+      missionId,
+      guildId,
+    });
+  };
+
+  const handleMissionReportReviewClick = () => {
+    if (!missionId) {
+      return;
+    }
+
+    const search = guildId ? `?guildId=${encodeURIComponent(guildId)}` : "";
+
+    navigate(`/missions/${encodeURIComponent(missionId)}/reports${search}`, {
+      state: {
+        mission: request,
+        guild,
+      },
+    });
+  };
+
+  const renderCardActions = () => {
+    if (actionVariant === "owner") {
+      return (
+        <div className="mt-auto flex flex-wrap justify-end gap-2 pt-4 max-[560px]:flex-col">
+          {canCancelMission ? (
+            <button
+              className="inline-flex min-h-10 cursor-pointer items-center justify-center rounded-xl border border-red-200 bg-white px-4 text-sm font-black text-red-600 transition hover:-translate-y-px hover:border-red-300 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:bg-white"
+              type="button"
+              disabled={!missionId || cancelMissionMutation.isPending}
+              onClick={handleMissionCancelClick}
+              aria-label={`${request.requestName} 의뢰취소`}
+              title={
+                missionId
+                  ? `${request.requestName} 의뢰취소`
+                  : "미션 식별자가 없어 의뢰취소를 할 수 없습니다."
+              }
+            >
+              {cancelMissionMutation.isPending ? "취소 중..." : "의뢰취소"}
+            </button>
+          ) : null}
+          <button
+            className="inline-flex min-h-10 cursor-pointer items-center justify-center rounded-xl border border-slate-200 bg-white px-4 text-sm font-black text-slate-600 transition hover:-translate-y-px hover:border-slate-300 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:bg-white"
+            type="button"
+            disabled={!missionId}
+            onClick={handleMissionReportReviewClick}
+            aria-label={`${request.requestName} 보고확인`}
+            title={
+              missionId
+                ? `${request.requestName} 보고확인`
+                : "미션 식별자가 없어 보고확인을 할 수 없습니다."
+            }
+          >
+            보고확인
+          </button>
+          {cancelMissionMutation.error ? (
+            <p className="basis-full rounded-[14px] border border-red-200 bg-red-50 px-4 py-3 text-sm font-bold text-red-700">
+              {cancelMissionMutation.error?.response?.data?.message ??
+                cancelMissionMutation.error?.message ??
+                "의뢰취소에 실패했습니다."}
+            </p>
+          ) : null}
+        </div>
+      );
+    }
+
+    return (
+      <div className="mt-auto flex justify-end pt-4">
+        <button
+          className="inline-flex min-h-10 cursor-pointer items-center rounded-xl border border-slate-200 bg-white px-4 text-sm font-black text-slate-600 transition hover:-translate-y-px hover:border-slate-300 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:bg-white"
+          type="button"
+          disabled={!missionId}
+          onClick={handleMissionProofClick}
+          aria-label={`${request.requestName} 의뢰보고`}
+          title={
+            missionId
+              ? `${request.requestName} 의뢰보고`
+              : "미션 식별자가 없어 의뢰보고를 열 수 없습니다."
+          }
+        >
+          의뢰보고
+        </button>
+      </div>
+    );
+  };
+
   return (
-    <article
-      className="min-w-0 rounded-[20px] border border-slate-200 bg-white p-[18px] shadow-[0_12px_30px_rgba(15,23,42,0.06)] transition hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-[0_16px_36px_rgba(15,23,42,0.10)]"
-      key={request.requestNumber}
-    >
+    <article className="flex h-full min-w-0 flex-col rounded-[20px] border border-slate-200 bg-white p-[18px] text-slate-900 shadow-[0_12px_30px_rgba(15,23,42,0.06)] transition hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-[0_16px_36px_rgba(15,23,42,0.09)]">
       {/* 미션 번호와 선택 길드를 한눈에 볼 수 있는 상단 배지 영역입니다. */}
       <div className="mb-3 flex items-center justify-between gap-2.5 max-[560px]:flex-col max-[560px]:items-stretch">
         <span className="inline-flex min-h-7 items-center rounded-full bg-indigo-50 px-2.5 text-xs font-black whitespace-nowrap text-indigo-700">
@@ -123,7 +240,10 @@ const MissionCard = ({ request, guild }) => {
       </div>
 
       {/* 미션 제목입니다. */}
-      <h2 className="mb-4 text-[19px] leading-snug font-bold text-slate-900">
+      <h2
+        className="mb-4 line-clamp-2 min-h-[3.25rem] text-[19px] leading-snug font-bold text-slate-900"
+        title={request.requestName}
+      >
         {request.requestName}
       </h2>
 
@@ -134,7 +254,7 @@ const MissionCard = ({ request, guild }) => {
           <dd className="m-0 text-sm font-bold [overflow-wrap:anywhere] text-slate-700">
             {request.requesterId ? (
               <a
-                className="inline-flex items-center gap-1 font-black text-indigo-700 underline decoration-indigo-300 underline-offset-4 transition hover:text-indigo-950"
+                className="inline-flex items-center gap-1 font-black text-slate-700 underline decoration-slate-300 underline-offset-4 transition hover:text-indigo-700"
                 href={getDiscordUserWebUrl(request.requesterId)}
                 onClick={(event) => openDiscordDm(event, request.requesterId)}
                 aria-label={`${request.requester}에게 Discord DM 보내기`}
@@ -144,7 +264,7 @@ const MissionCard = ({ request, guild }) => {
                 <span aria-hidden="true">↗</span>
               </a>
             ) : (
-              request.requester
+              (request.requester ?? "알 수 없음")
             )}
           </dd>
         </div>
@@ -162,29 +282,14 @@ const MissionCard = ({ request, guild }) => {
         </div>
         <div className="col-span-full min-w-0 rounded-[14px] bg-slate-50 p-3">
           <dt className="mb-1 text-xs font-black text-slate-400">의뢰설명</dt>
-          <dd className="m-0 text-sm font-bold [overflow-wrap:anywhere] text-slate-700">
-            {request.description}
+          <dd className="m-0 text-sm leading-6 font-bold [overflow-wrap:anywhere] text-slate-700">
+            {getDescription(request)}
           </dd>
         </div>
       </dl>
 
-      {/* 추후 미션 수행 보고 플로우로 연결될 버튼입니다. */}
-      <div className="mt-4 flex justify-end">
-        <button
-          className="inline-flex min-h-10 cursor-pointer items-center rounded-xl border border-red-200 bg-red-50 px-4 text-sm font-black text-red-700 transition hover:-translate-y-px hover:bg-red-100 hover:text-red-800 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:bg-red-50 disabled:hover:text-red-700"
-          type="button"
-          disabled={!missionId}
-          onClick={handleMissionProofClick}
-          aria-label={`${request.requestName} 의뢰보고`}
-          title={
-            missionId
-              ? `${request.requestName} 의뢰보고`
-              : "미션 식별자가 없어 의뢰보고를 열 수 없습니다."
-          }
-        >
-          의뢰보고
-        </button>
-      </div>
+      {/* 목록 성격에 따라 카드 하단 액션을 다르게 표시합니다. */}
+      {renderCardActions()}
     </article>
   );
 };

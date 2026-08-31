@@ -3,6 +3,8 @@ import NotFound from "./pages/Notfound";
 import Home from "./pages/Home";
 import MissionCreate from "./pages/MissionCreate";
 import MissionProof from "./pages/MissionProof";
+import MissionReportReview from "./pages/MissionReportReview";
+import MyRegisteredMissions from "./pages/MyRegisteredMissions";
 import Profile from "./pages/Profile";
 import Guide from "./pages/Guide";
 import { Routes, Route } from "react-router-dom";
@@ -15,6 +17,11 @@ function App() {
         <Route element={<GlobalLayout />}>
           <Route path="/" element={<Home />} />
           <Route path="/missions/new" element={<MissionCreate />} />
+          <Route path="/missions/me" element={<MyRegisteredMissions />} />
+          <Route
+            path="/missions/:missionId/reports"
+            element={<MissionReportReview />}
+          />
           <Route path="/missions/:missionId/proof" element={<MissionProof />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/guide" element={<Guide />} />

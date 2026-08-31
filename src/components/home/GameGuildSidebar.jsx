@@ -14,7 +14,7 @@ const SidebarMessage = ({ children, isError = false }) => (
   </div>
 );
 
-const GameGuildSidebar = () => {
+const GameGuildSidebar = ({ useMissions = useHomeMissions }) => {
   const {
     guilds,
     activeGuild,
@@ -24,7 +24,7 @@ const GameGuildSidebar = () => {
     userGuildsError,
     isLoading: isActiveGuildMissionsLoading,
     missions,
-  } = useHomeMissions();
+  } = useMissions();
   const setSelectedGuildId = useSessionStore(
     (state) => state.setSelectedGuildId,
   );

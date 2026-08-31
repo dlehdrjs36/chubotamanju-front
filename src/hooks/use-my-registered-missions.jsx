@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { useGuildMissionsData } from "./queries/use-guild-missions-data";
+import { useMyGuildMissionsData } from "./queries/use-my-guild-missions-data";
 import { useHomeUiStore } from "../store/page/useHomeUiStore";
 import { useHomeGuilds } from "./use-home-guilds";
 
@@ -126,12 +126,12 @@ const getMissionSearchText = (mission) => {
     .toLowerCase();
 };
 
-// Home 미션 목록에서 필요한 선택 길드, 검색어, 무한 스크롤 쿼리 상태를 정규화합니다.
-export function useHomeMissions() {
+// Home 미션 목록과 동일한 화면 상태를 유지하되, 본인이 등록한 미션 API만 사용합니다.
+export function useMyRegisteredMissions() {
   const homeGuilds = useHomeGuilds();
   const keyword = useHomeUiStore((state) => state.keyword);
   const selectedGuildId = homeGuilds.activeGuild?.guildId ?? "";
-  const guildMissionsQuery = useGuildMissionsData(selectedGuildId, {
+  const guildMissionsQuery = useMyGuildMissionsData(selectedGuildId, {
     enabled: homeGuilds.isLoggedIn,
   });
 

@@ -3,7 +3,12 @@ import { useHomeMissions } from "../../hooks/use-home-missions";
 import HomeEmptyState from "./HomeEmptyState";
 import MissionCard from "./MissionCard";
 
-const MissionList = () => {
+const MissionList = ({
+  useMissions = useHomeMissions,
+  missionCardActionVariant = "proof",
+  emptyTitle = "등록된 미션이 없습니다.",
+  emptyDescription = "이 길드에 새 미션이 등록되면 이곳에 표시됩니다.",
+}) => {
   const loadMoreRef = useRef(null);
   const {
     isLoggedIn,
@@ -19,18 +24,31 @@ const MissionList = () => {
     hasNextPage,
     isFetchingNextPage,
     fetchNextPage,
-  } = useHomeMissions();
+  } = useMissions();
+
+  const canLoadMoreMissions = Boolean(
+    isLoggedIn &&
+    activeGuild &&
+    hasNextPage &&
+    !isFetchingNextPage &&
+    !userGuildsError &&
+    !missionsError,
+  );
+  const shouldShowLoadMoreIndicator = Boolean(
+    isLoggedIn &&
+    activeGuild &&
+    !userGuildsError &&
+    !missionsError &&
+    (hasNextPage || isFetchingNextPage),
+  );
 
   // 무한 스크롤: 하단 감지 영역이 보이면 마지막 미션의 id/createdAt 기준으로 다음 페이지를 조회합니다.
+  // 인증이 만료되어 요청이 실패하면 hasNextPage가 이전 성공 페이지 기준으로 남아있을 수 있으므로,
+  // 에러 상태에서는 감지 영역을 제거하고 추가 호출을 막습니다.
   useEffect(() => {
     const loadMoreElement = loadMoreRef.current;
 
-    if (
-      !loadMoreElement ||
-      !activeGuild ||
-      !hasNextPage ||
-      isFetchingNextPage
-    ) {
+    if (!loadMoreElement || !canLoadMoreMissions) {
       return undefined;
     }
 
@@ -46,7 +64,7 @@ const MissionList = () => {
     observer.observe(loadMoreElement);
 
     return () => observer.disconnect();
-  }, [activeGuild, fetchNextPage, hasNextPage, isFetchingNextPage]);
+  }, [canLoadMoreMissions, fetchNextPage]);
 
   const renderContent = () => {
     // 1. 로그인 상태 확인 또는 길드 목록 자체가 아직 없으면 사이드바/목록 모두 대기 상태입니다.
@@ -125,13 +143,9 @@ const MissionList = () => {
     if (visibleMissions.length === 0) {
       return (
         <HomeEmptyState
-          title={
-            hasKeyword ? "검색 결과가 없습니다." : "등록된 미션이 없습니다."
-          }
+          title={hasKeyword ? "검색 결과가 없습니다." : emptyTitle}
           description={
-            hasKeyword
-              ? "다른 키워드로 다시 검색해 주세요."
-              : "이 길드에 새 미션이 등록되면 이곳에 표시됩니다."
+            hasKeyword ? "다른 키워드로 다시 검색해 주세요." : emptyDescription
           }
         />
       );
@@ -143,6 +157,7 @@ const MissionList = () => {
         key={request.requestNumber}
         request={request}
         guild={activeGuild}
+        actionVariant={missionCardActionVariant}
       />
     ));
   };
@@ -154,7 +169,7 @@ const MissionList = () => {
     >
       {renderContent()}
 
-      {activeGuild && (hasNextPage || isFetchingNextPage) ? (
+      {shouldShowLoadMoreIndicator ? (
         <div
           ref={loadMoreRef}
           className="col-span-full grid min-h-12 place-items-center rounded-2xl border border-dashed border-slate-200 bg-white/70 text-sm font-bold text-slate-400"

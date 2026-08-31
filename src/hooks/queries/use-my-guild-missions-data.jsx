@@ -1,5 +1,5 @@
 import { useInfiniteQuery } from "@tanstack/react-query";
-import { getGuildMissions } from "../../api/get-guild-missions";
+import { getMyGuildMissions } from "../../api/get-my-guild-missions";
 
 const MISSION_PAGE_SIZE = 20;
 
@@ -37,17 +37,17 @@ const getNextMissionCursor = (mission) => {
   };
 };
 
-// guildId가 있을 때만 미션을 조회해서 초기 홈 화면에서 불필요한 API 호출을 막습니다.
-export function useGuildMissionsData(guildId, { enabled = true } = {}) {
+// guildId가 있을 때만 본인이 등록한 미션을 조회해서 불필요한 API 호출을 막습니다.
+export function useMyGuildMissionsData(guildId, { enabled = true } = {}) {
   return useInfiniteQuery({
     queryFn: ({ pageParam, signal }) =>
-      getGuildMissions({
+      getMyGuildMissions({
         guildId,
         size: MISSION_PAGE_SIZE,
         signal,
         ...pageParam,
       }),
-    queryKey: ["guildMissions", guildId],
+    queryKey: ["myGuildMissions", guildId],
     enabled: Boolean(guildId) && enabled,
     initialPageParam: {},
     getNextPageParam: (lastPage) => {
