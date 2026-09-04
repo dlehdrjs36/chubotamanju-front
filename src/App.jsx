@@ -7,6 +7,8 @@ import MissionReportReview from "./pages/MissionReportReview";
 import MyRegisteredMissions from "./pages/MyRegisteredMissions";
 import Profile from "./pages/Profile";
 import Guide from "./pages/Guide";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import TermsOfService from "./pages/TermsOfService";
 import { Routes, Route } from "react-router-dom";
 import GlobalLayout from "./layout/global-layout";
 
@@ -25,6 +27,8 @@ function App() {
           <Route path="/missions/:missionId/proof" element={<MissionProof />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/guide" element={<Guide />} />
+          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+          <Route path="/terms-of-service" element={<TermsOfService />} />
           <Route path="/a/:id" element={<NotFound />} />
         </Route>
       </Routes>
