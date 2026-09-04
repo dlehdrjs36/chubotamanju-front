@@ -25,7 +25,7 @@ const Header = () => {
     <header style={styles.header}>
       <a href="/" style={styles.brand} aria-label="Chubotamanju 홈으로 이동">
         <span style={styles.logoImageBox} aria-hidden="true">
-          <img src="/favicon.svg" alt="" style={styles.logoImage} />
+          <img src="/favicon.ico" alt="" style={styles.logoImage} />
         </span>
         <span style={styles.logo}>Chubotamanju</span>
       </a>

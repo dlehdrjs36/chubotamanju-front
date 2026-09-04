@@ -1,0 +1,7 @@
+User-agent: *
+# 1. 크롤링을 허용할 라우터 주소
+Allow: /guide
+Allow: /guide/
+
+# 2. 그 외의 모든 주소 진입 차단
+Disallow: /

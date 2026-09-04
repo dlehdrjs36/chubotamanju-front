@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import bountyBoardImage from "../assets/guild/bounty-board.png";
+import bountyBoardImage from "../assets/guild/bounty-wait.png";
 import MissionReportReviewBoard from "../components/MissionReportReviewBoard";
 import { useMissionReportReviewTarget } from "../hooks/use-mission-report-review-target";
 
